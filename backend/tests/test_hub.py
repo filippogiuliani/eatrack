@@ -148,3 +148,45 @@ def test_export_for_the_import(client, wehub, monkeypatch):
     f = ok(client().get('/api/hub/export', headers={'Authorization': 'Bearer ' + KEY}))['families'][0]
     assert f['members'][0]['email'] == 'fil@example.com'
     assert f['people'] == [{'local_id': 1, 'name': 'Luca', 'birth_date': '2025-01-10', 'kind': 'child'}]
+
+
+def merge(c, into, families, key=KEY):
+    return c.post('/api/hub/merge', json={'into': into, 'families': families}, headers={'Authorization': 'Bearer ' + key})
+
+
+def test_merge_two_families_made_separately(client, wehub, monkeypatch):
+    """Each parent tracked the same baby in their own family: one family, one child, all the meals."""
+    monkeypatch.setattr(hub, 'URL', '')
+    monkeypatch.setattr(auth, 'PASSWORD_LOGIN', True)
+    fil, sara = client(), client()
+    a = sign_up(fil, child='Luca', birth_date=None)
+    b = sign_up(sara, email='sara@example.com', name='Sara', child='luca', birth_date='2025-01-10')
+    luca_a, luca_b = a['children'][0]['id'], b['children'][0]['id']
+
+    def meal(c, child, day):
+        food = ok(c.get('/api/foods'))[0]
+        ok(c.post('/api/meals', json={'child_id': child, 'date': day, 'meal_type': 'lunch',
+                                      'foods': [{'id': food['id'], 'amount': 'full'}]}), 201)
+        return food
+    fa = meal(fil, luca_a, '2026-03-01')
+    fb = meal(sara, luca_b, '2026-03-02')
+    cat = ok(sara.get('/api/foods'))[0]['category_id']
+    custom = ok(sara.post('/api/foods', json={'name': 'Pappa di Sara', 'category_id': cat}), 201)
+    with db.transaction() as conn:
+        conn.execute("INSERT INTO plan_frequencies VALUES (?, 'fish', 1, 2)", (luca_b,))
+        conn.execute("INSERT INTO plan_frequencies VALUES (?, 'fish', 2, 3)", (luca_a,))
+        conn.execute('INSERT INTO jars (family_id, label, location, made_on) VALUES (?,?,?,?)', (b['family']['id'], 'J1', 'freezer', '2026-03-01'))
+    r = ok(merge(client(), a['family']['id'], [b['family']['id']]))
+    assert r['report']['children_merged'] == 1 and r['report']['meals'] == 1 and r['report']['jars'] == 1
+    me = ok(sara.get('/api/me'))
+    assert me['family']['id'] == a['family']['id']
+    assert me['children'] == [{'id': luca_a, 'name': 'Luca', 'birth_date': '2025-01-10', 'archived': 0}]
+    with db.transaction() as conn:
+        assert conn.execute('SELECT COUNT(*) FROM meals WHERE child_id = ?', (luca_a,)).fetchone()[0] == 2
+        assert conn.execute('SELECT min_times FROM plan_frequencies WHERE child_id = ?', (luca_a,)).fetchone()[0] == 2
+        assert conn.execute('SELECT COUNT(*) FROM children').fetchone()[0] == 1
+        # Same food names became one food; Sara's own food moved over
+        names = [r[0] for r in conn.execute('SELECT name FROM foods WHERE family_id = ?', (a['family']['id'],))]
+        assert len(names) == len({n.lower() for n in names}) and 'Pappa di Sara' in names
+        assert conn.execute('SELECT COUNT(*) FROM families').fetchone()[0] == 1
+    assert fa and fb and custom

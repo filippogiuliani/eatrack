@@ -198,6 +198,69 @@ def export():
     return jsonify(families=out)
 
 
+# ---------- For weHub: merging families made separately before weHub ----------
+
+@bp.post('/hub/merge')
+def merge():
+    """{into: local family id, families: [local family ids]}: move everything of those families into `into`.
+    Called by weHub's import when two people had made separate families before. A backup of the database is made
+    first; nothing is deleted except the emptied families (checked: if any row still belongs to one, nothing is done)."""
+    presented = request.headers.get('Authorization', '')[7:].strip()
+    if not KEY or not hmac.compare_digest(KEY, presented):
+        return jsonify(error='Unknown key'), 401
+    d = request.get_json(silent=True) or {}
+    try:
+        into = int(d.get('into'))
+        sources = sorted({int(x) for x in d.get('families') or []} - {into})
+    except (TypeError, ValueError):
+        return jsonify(error='Invalid request'), 400
+    if not sources:
+        return jsonify(error='Nothing to merge'), 400
+    with db.transaction() as conn:
+        found = {r['id']: r for r in conn.execute(
+            f"SELECT id, hub_id FROM families WHERE id IN ({','.join('?' * (len(sources) + 1))})", (into, *sources))}
+        if into not in found or any(s not in found for s in sources):
+            return jsonify(error='Family not found'), 404
+        if any(found[s]['hub_id'] for s in sources):
+            return jsonify(error='A family linked to weHub cannot be merged into another'), 409
+    import backup
+    backup.create_backup('pre-merge')
+    report = {}
+    try:
+        with db.transaction() as conn:
+            for src in sources:
+                merge_family(conn, src, into, report)
+            bump(conn, into)
+    except RuntimeError as e:
+        print(f'[hub] merge cancelled: {e}', flush=True)
+        return jsonify(error=str(e)), 409
+    print(f'[hub] merged families {sources} into {into}: {report}', flush=True)
+    return jsonify(merged=sources, into=into, report=report)
+
+
+def merge_family(conn, src, dst, report):
+    """Move one family into another inside the caller's transaction."""
+    merge_data(conn, src, dst, report)
+    # Members: everyone of both families stays (a role already held in the destination wins)
+    for m in conn.execute('SELECT user_id, role FROM members WHERE family_id = ?', (src,)).fetchall():
+        conn.execute('INSERT OR IGNORE INTO members (family_id, user_id, role) VALUES (?,?,?)', (dst, m['user_id'], m['role']))
+    conn.execute('DELETE FROM members WHERE family_id = ?', (src,))
+    conn.execute("DELETE FROM tokens WHERE family_id = ?", (src,))  # pending invitations of the old family
+    # Safety net: no table may still hold rows of the old family, otherwise deleting it would cascade
+    tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name != 'families'")]
+    left = [t for t in tables if 'family_id' in {c[1] for c in conn.execute(f'PRAGMA table_info({t})')}
+            and conn.execute(f'SELECT 1 FROM {t} WHERE family_id = ? LIMIT 1', (src,)).fetchone()]
+    if left:
+        raise RuntimeError(f'family {src} still has rows in {left}: merge cancelled')
+    conn.execute('DELETE FROM families WHERE id = ?', (src,))
+    report['families'] = report.get('families', 0) + 1
+
+
+def _count(report, key, n):
+    if n:
+        report[key] = report.get(key, 0) + n
+
+
 # ======================================================================
 # This app's people: the children (weHub people marked as children)
 # ======================================================================
@@ -238,3 +301,44 @@ def export_people(conn, family_id):
 
 def on_member_removed(conn, family_id, user_id):
     pass
+
+
+def merge_data(conn, src, dst, report):
+    """eaTrack: foods and children with the same name become one (meals, jars and plans follow); the rest moves."""
+    for f in conn.execute('SELECT id, name FROM foods WHERE family_id = ?', (src,)).fetchall():
+        t = conn.execute('SELECT id FROM foods WHERE family_id = ? AND name = ? COLLATE NOCASE', (dst, f['name'])).fetchone()
+        if t:
+            for table in ('meal_foods', 'jar_foods', 'plan_meal_foods'):
+                conn.execute(f'UPDATE OR IGNORE {table} SET food_id = ? WHERE food_id = ?', (t['id'], f['id']))
+                conn.execute(f'DELETE FROM {table} WHERE food_id = ?', (f['id'],))
+            conn.execute('DELETE FROM foods WHERE id = ?', (f['id'],))
+            _count(report, 'foods_merged', 1)
+        else:
+            conn.execute('UPDATE foods SET family_id = ? WHERE id = ?', (dst, f['id']))
+            _count(report, 'foods', 1)
+    for c in conn.execute('SELECT * FROM children WHERE family_id = ?', (src,)).fetchall():
+        t = conn.execute('SELECT * FROM children WHERE family_id = ? AND name = ? COLLATE NOCASE', (dst, c['name'])).fetchone()
+        if not t:
+            conn.execute('UPDATE children SET family_id = ? WHERE id = ?', (dst, c['id']))
+            _count(report, 'children', 1)
+            continue
+        # The same child, tracked twice: one child with all the meals; the destination's plan wins
+        _count(report, 'meals', conn.execute('UPDATE meals SET child_id = ? WHERE child_id = ?', (t['id'], c['id'])).rowcount)
+        if c['birth_date'] and not t['birth_date']:
+            conn.execute('UPDATE children SET birth_date = ? WHERE id = ?', (c['birth_date'], t['id']))
+        conn.execute('UPDATE OR IGNORE plan_frequencies SET child_id = ? WHERE child_id = ?', (t['id'], c['id']))
+        conn.execute('DELETE FROM plan_frequencies WHERE child_id = ?', (c['id'],))
+        for pm in conn.execute('SELECT id, weekday, meal_type FROM plan_meals WHERE child_id = ?', (c['id'],)).fetchall():
+            if conn.execute('SELECT 1 FROM plan_meals WHERE child_id = ? AND weekday = ? AND meal_type = ?',
+                            (t['id'], pm['weekday'], pm['meal_type'])).fetchone():
+                conn.execute('DELETE FROM plan_meal_foods WHERE plan_meal_id = ?', (pm['id'],))
+                conn.execute('DELETE FROM plan_meals WHERE id = ?', (pm['id'],))
+            else:
+                conn.execute('UPDATE plan_meals SET child_id = ? WHERE id = ?', (t['id'], pm['id']))
+        conn.execute('DELETE FROM children WHERE id = ?', (c['id'],))
+        _count(report, 'children_merged', 1)
+    _count(report, 'jars', conn.execute('UPDATE jars SET family_id = ? WHERE family_id = ?', (dst, src)).rowcount)
+    if conn.execute('SELECT 1 FROM dotrack_links WHERE family_id = ?', (dst,)).fetchone():
+        conn.execute('DELETE FROM dotrack_links WHERE family_id = ?', (src,))
+    else:
+        conn.execute('UPDATE dotrack_links SET family_id = ? WHERE family_id = ?', (dst, src))

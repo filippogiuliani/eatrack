@@ -114,4 +114,4 @@ Optional. With `EATRACK_HUB_URL` and `EATRACK_HUB_KEY` set (see `.env.example` a
 only through the OIDC provider (the same Pocket ID as weHub), and takes the family from weHub: members, roles,
 people and who may use eaTrack. The family, members and people become read-only here, with a link to weHub; the copy is
 refreshed every 2 minutes and keeps working if weHub is down. Existing data is adopted, not recreated: run weHub's
-**Import** once (it reads `GET /api/hub/export` with the key). Without these settings eaTrack works on its own as before.
+**Import** once (it reads `GET /api/hub/export` with the key). A family someone had made on their own can be merged into the shared one from weHub's import (`POST /api/hub/merge`: a database backup first, then everything moves; children and foods with the same name become one, meals included). Without these settings eaTrack works on its own as before.
