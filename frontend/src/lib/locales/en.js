@@ -153,6 +153,8 @@ export default {
   "dotrack.list": "Shopping list",
   "dotrack.choose_list": "Choose the list",
   "dotrack.no_list": "There is no tick-off list in doTrack yet: create one and press Refresh.",
+  "dotrack.via_hub": "doTrack is connected through weHub: no address or token needed.",
+  "dotrack.no_list_hub": "There is no tick-off list in doTrack yet: create one and reopen this page.",
   "dotrack.disconnect": "Disconnect",
   "dotrack.confirm_disconnect": "Disconnect doTrack?",
   "dotrack.admin_only": "The family admin sets up the link.",

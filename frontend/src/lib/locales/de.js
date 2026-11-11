@@ -153,6 +153,8 @@ export default {
   "dotrack.list": "Einkaufsliste",
   "dotrack.choose_list": "Liste wählen",
   "dotrack.no_list": "In doTrack gibt es noch keine Abhakliste: lege eine an und tippe auf Aktualisieren.",
+  "dotrack.via_hub": "doTrack ist über weHub verbunden: keine Adresse und kein Token nötig.",
+  "dotrack.no_list_hub": "In doTrack gibt es noch keine Abhakliste: lege eine an und öffne diese Seite erneut.",
   "dotrack.disconnect": "Trennen",
   "dotrack.confirm_disconnect": "doTrack trennen?",
   "dotrack.admin_only": "Die Verbindung richtet der Familien-Admin ein.",

@@ -24,7 +24,14 @@
   let dt = $state(null);
   let dtForm = $state({ url: '', token: '' });
   let dtLists = $state([]);
-  $effect(() => { app.me?.family?.id; get('/integrations/dotrack').then((d) => { dt = d; dtForm.url = d.url ?? ''; }).catch(() => {}); });
+  $effect(() => {
+    app.me?.family?.id;
+    get('/integrations/dotrack').then((d) => {
+      dt = d; dtForm.url = d.url ?? '';
+      // Through weHub nothing to connect: the admin only needs the lists to pick from
+      if (d.via_hub && admin) get('/integrations/dotrack/lists').then((l) => (dtLists = l)).catch(showError);
+    }).catch(() => {});
+  });
   async function dtConnect(e) {
     e?.preventDefault();
     try {
@@ -273,6 +280,22 @@
   <section class="card stack">
     <h2>🛒 {t('dotrack.title')}</h2>
     <p class="muted small">{t('dotrack.intro')}</p>
+    {#if dt?.via_hub}
+      <p class="small">{t('dotrack.via_hub')}{#if dt.list_name} · <b>{dt.list_name}</b>{/if}</p>
+      {#if admin}
+        {#if dtLists.length}
+          <label class="field"><span class="label">{t('dotrack.list')}</span>
+            <select class="input" value={dt.list_id ?? ''} onchange={(e) => dtChoose(e.currentTarget.value)}>
+              <option value="" disabled>{t('dotrack.choose_list')}</option>
+              {#each dtLists as l (l.id)}<option value={l.id}>{l.name}</option>{/each}
+            </select></label>
+        {:else}
+          <p class="small">{t('dotrack.no_list_hub')}</p>
+        {/if}
+      {:else if !dt.list_id}
+        <p class="small muted">{t('dotrack.admin_only')}</p>
+      {/if}
+    {:else}
     {#if dt?.connected}
       <p class="small">{t('dotrack.connected_to', { url: dt.url })}{#if dt.list_name} · <b>{dt.list_name}</b>{/if}</p>
     {/if}
@@ -297,6 +320,7 @@
       {#if dt?.connected}<button class="btn ghost sm" onclick={dtDisconnect}>{t('dotrack.disconnect')}</button>{/if}
     {:else if !dt?.connected}
       <p class="small muted">{t('dotrack.admin_only')}</p>
+    {/if}
     {/if}
   </section>
 

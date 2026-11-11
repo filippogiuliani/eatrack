@@ -153,6 +153,8 @@ export default {
   "dotrack.list": "Lista de compras",
   "dotrack.choose_list": "Escolhe a lista",
   "dotrack.no_list": "Ainda não há uma lista para assinalar no doTrack: cria-a e carrega em Atualizar.",
+  "dotrack.via_hub": "O doTrack está ligado através do weHub: não é preciso endereço nem token.",
+  "dotrack.no_list_hub": "Ainda não há uma lista para assinalar no doTrack: cria-a e volta a abrir esta página.",
   "dotrack.disconnect": "Desligar",
   "dotrack.confirm_disconnect": "Desligar o doTrack?",
   "dotrack.admin_only": "A ligação é configurada por quem gere a família.",

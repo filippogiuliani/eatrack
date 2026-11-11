@@ -63,3 +63,46 @@ def test_connect_and_send(family, client, monkeypatch):
     assert member.delete('/api/integrations/dotrack').status_code == 403
     ok(c.delete('/api/integrations/dotrack'))
     assert c.post('/api/integrations/dotrack/send', json={'items': ['x']}).status_code == 400
+
+
+def test_through_wehub_no_address_or_token(family, client, monkeypatch):
+    """With weHub the family's doTrack is reached through weHub: the admin only picks the list."""
+    import db
+    import hub
+    monkeypatch.setattr(hub, 'URL', 'http://wehub.test')
+    monkeypatch.setattr(hub, 'KEY', 'k' * 40)
+    with db.transaction() as conn:
+        conn.execute('UPDATE families SET hub_id = 7')
+        conn.execute('UPDATE users SET hub_id = 10')
+    calls = []
+
+    def fake(method, url, json=None, params=None, headers=None, **kw):
+        calls.append((method, url, json, params, headers))
+        r = requests.Response()
+        r.headers['Content-Type'] = 'application/json'
+        if url.endswith('/families/7/lists'):
+            r.status_code, r._content = 200, b'[{"id": 3, "name": "Spesa"}, {"id": 5, "name": "Mercato"}]'
+        elif url.endswith('/families/7/lists/5/items'):
+            r.status_code, r._content = 201, b'{"added": [{"id": 1}], "skipped": ["Mela"]}'
+        else:
+            r.status_code, r._content = 404, b'{"error": "doTrack does not know this family yet: sign in to doTrack once"}'
+        return r
+
+    monkeypatch.setattr(api_dotrack.requests, 'request', fake)
+    c = family.c
+    assert ok(c.get('/api/integrations/dotrack')) == {'connected': True, 'via_hub': True, 'list_id': None, 'list_name': None}
+    assert ok(c.get('/api/integrations/dotrack/lists')) == [{'id': 3, 'name': 'Spesa'}, {'id': 5, 'name': 'Mercato'}]
+    assert c.post('/api/integrations/dotrack/send', json={'items': ['x']}).status_code == 400   # no list chosen yet
+    r = ok(c.put('/api/integrations/dotrack', json={'list_id': 5}))
+    assert (r['list_id'], r['list_name'], r['via_hub']) == (5, 'Mercato', True)
+    sent = ok(c.post('/api/integrations/dotrack/send', json={'items': ['Zucchine', 'Mela']}))
+    assert sent == {'added': 1, 'skipped': 1, 'list_name': 'Mercato'}
+    method, url, payload, params, headers = calls[-1]
+    assert (method, url, payload, params) == ('POST', 'http://wehub.test/api/service/dotrack/families/7/lists/5/items',
+                                              {'items': ['Zucchine', 'Mela']}, {'user': 10})
+    assert headers['Authorization'] == 'Bearer ' + 'k' * 40
+    # doTrack has never seen the family: a readable reason
+    with db.transaction() as conn:
+        conn.execute('UPDATE dotrack_links SET list_id = 6')
+    r = c.post('/api/integrations/dotrack/send', json={'items': ['x']})
+    assert r.status_code == 502 and 'entra una volta in doTrack' in r.get_json()['error']

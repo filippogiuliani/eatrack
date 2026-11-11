@@ -153,6 +153,8 @@ export default {
   "dotrack.list": "Liste de courses",
   "dotrack.choose_list": "Choisir la liste",
   "dotrack.no_list": "Il n’y a pas encore de liste à cocher dans doTrack : créez-la puis Actualiser.",
+  "dotrack.via_hub": "doTrack est relié via weHub : ni adresse ni jeton nécessaires.",
+  "dotrack.no_list_hub": "Il n’y a pas encore de liste à cocher dans doTrack : créez-la puis rouvrez cette page.",
   "dotrack.disconnect": "Déconnecter",
   "dotrack.confirm_disconnect": "Déconnecter doTrack ?",
   "dotrack.admin_only": "Le lien est configuré par l’administrateur de la famille.",

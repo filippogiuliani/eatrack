@@ -90,6 +90,7 @@ def create_app():
     @app.errorhandler(409)
     @app.errorhandler(413)
     @app.errorhandler(429)
+    @app.errorhandler(502)
     def json_error(e):
         if request.path.startswith('/api/'):
             return jsonify(error=i18n.tr(getattr(e, 'description', str(e)))), e.code
