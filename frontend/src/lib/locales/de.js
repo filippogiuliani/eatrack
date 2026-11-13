@@ -115,6 +115,7 @@ export default {
 
   'plan.title': 'Wochenplan', 'plan.short_title': 'Plan',
   'plan.intro': 'Trage hier die Empfehlungen des Kinderarztes ein. Beide Teile sind optional: fülle einen, beide oder keinen aus. Das Tagebuch zeigt, was in der Woche noch fehlt, und in leeren Mahlzeiten, was geplant war.',
+  'plan.papers_title': "Vom Kinderarzt (paTrack)", 'plan.papers_none': "Kein Plan des Kinderarztes für dieses Kind in paTrack. Öffne in paTrack das Dokument, wähle das Kind und aktiviere „Plan des Kinderarztes für eaTrack“.",
   'plan.frequencies': 'Mal pro Woche', 'plan.frequencies_note': 'Für jede Kategorie: wie oft sie pro Woche (Montag–Sonntag) angeboten wird. Lass leer, was du nicht brauchst. Gezählt werden Mahlzeiten, in denen das Lebensmittel vorkommt und nicht verweigert wurde.',
   'plan.min': 'min', 'plan.max': 'max', 'plan.min_of': '{name}: Minimum pro Woche', 'plan.max_of': '{name}: Maximum pro Woche',
   'plan.menu': 'Speiseplan', 'plan.menu_note': 'Was an jedem Tag und zu jeder Mahlzeit zubereitet wird. Tippe auf eine Mahlzeit, um Lebensmittel zu wählen oder eine Notiz zu schreiben.',

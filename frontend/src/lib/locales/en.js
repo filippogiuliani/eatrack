@@ -115,6 +115,7 @@ export default {
 
   'plan.title': 'Weekly plan', 'plan.short_title': 'Plan',
   'plan.intro': "Enter your pediatrician's guidance here. Both parts are optional: fill in one, both or neither. The diary shows what is left for the week and, in empty meals, what was planned.",
+  'plan.papers_title': "From the paediatrician (paTrack)", 'plan.papers_none': "No paediatrician's plan for this child in paTrack. In paTrack, open the document, choose the child and turn on “Paediatrician's plan for eaTrack”.",
   'plan.frequencies': 'Times per week', 'plan.frequencies_note': 'For each category, how many times to offer it in a week (Monday–Sunday). Leave blank what you do not need. Counts meals where the food appears and was not refused.',
   'plan.min': 'min', 'plan.max': 'max', 'plan.min_of': '{name}: weekly minimum', 'plan.max_of': '{name}: weekly maximum',
   'plan.menu': 'Menu', 'plan.menu_note': 'What to prepare on each day and meal. Tap a meal to pick foods or write a note.',

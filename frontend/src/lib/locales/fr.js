@@ -115,6 +115,7 @@ export default {
 
   'plan.title': 'Plan de la semaine', 'plan.short_title': 'Plan',
   'plan.intro': 'Notez ici les conseils du pédiatre. Les deux parties sont facultatives : remplissez-en une, les deux ou aucune. Le journal indique ce qu’il reste pour la semaine et, dans les repas vides, ce qui était prévu.',
+  'plan.papers_title': "Du pédiatre (paTrack)", 'plan.papers_none': "Aucun plan du pédiatre pour cet enfant dans paTrack. Dans paTrack, ouvrez le document, choisissez l'enfant et activez « Plan du pédiatre pour eaTrack ».",
   'plan.frequencies': 'Fois par semaine', 'plan.frequencies_note': 'Pour chaque catégorie, combien de fois la proposer dans la semaine (lundi–dimanche). Laissez vide ce dont vous n’avez pas besoin. Sont comptés les repas où l’aliment apparaît sans avoir été refusé.',
   'plan.min': 'min', 'plan.max': 'max', 'plan.min_of': '{name} : minimum par semaine', 'plan.max_of': '{name} : maximum par semaine',
   'plan.menu': 'Menu', 'plan.menu_note': 'Ce qu’il faut préparer chaque jour et à chaque repas. Touchez un repas pour choisir des aliments ou écrire une note.',

@@ -6,9 +6,10 @@ Two parts, both optional:
 """
 import datetime
 
-from flask import Blueprint, abort, jsonify, request
+from flask import Blueprint, abort, g, jsonify, request
 
 import db
+import i18n
 from common import body, check_family_foods, family_child, id_list, requested_child, text, valid_date
 
 bp = Blueprint('plan', __name__)
@@ -127,3 +128,25 @@ def week_progress():
         rows = [{'macro': m, 'times': counts.get(m, 0), 'min': targets[m]['min_times'], 'max': targets[m]['max_times']}
                 for m in _macros(conn) if m in targets]
     return jsonify(start=monday.isoformat(), end=sunday.isoformat(), frequencies=rows)
+
+
+@bp.get('/plan/documents')
+def plan_documents():
+    """The paediatrician's plans of the child archived in paTrack (weHub mode, for someone who uses paTrack):
+    {available, documents: [{id, title, doc_type, doc_date, issuer, excerpt, url}]}."""
+    from famkit import hub
+    with db.transaction() as conn:
+        child_id = requested_child(conn)
+        child = conn.execute('SELECT hub_id FROM children WHERE id = ?', (child_id,)).fetchone()
+        ids = hub.family_ids(conn, g.family_id) if hub.enabled() else None
+    if not ids or not child or not child['hub_id']:
+        return jsonify(available=False, documents=[])
+    try:
+        docs = hub.ask('patrack', 'GET', f"/plans?child={int(child['hub_id'])}", ids[0], ids[1])
+    except hub.AskError:
+        return jsonify(available=False, documents=[])    # no paTrack for this person (or not connected)
+    except hub.Unavailable as e:
+        print(f'[patrack] {e}', flush=True)
+        return jsonify(available=True, documents=[], error=i18n.tr('paTrack is not reachable'))
+    keep = ('id', 'title', 'doc_type', 'doc_date', 'issuer', 'excerpt', 'url')
+    return jsonify(available=True, documents=[{k: d.get(k) for k in keep} for d in docs if isinstance(d, dict)])

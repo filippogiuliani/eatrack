@@ -115,6 +115,7 @@ export default {
 
   'plan.title': 'Plano semanal', 'plan.short_title': 'Plano',
   'plan.intro': 'Registe aqui as indicações do pediatra. As duas partes são opcionais: pode preencher uma, ambas ou nenhuma. O diário mostra o que falta na semana e, nas refeições vazias, o que estava previsto.',
+  'plan.papers_title': "Do pediatra (paTrack)", 'plan.papers_none': "Nenhum plano do pediatra para esta criança no paTrack. No paTrack, abra o documento, escolha a criança e ative «Plano do pediatra para o eaTrack».",
   'plan.frequencies': 'Vezes por semana', 'plan.frequencies_note': 'Para cada categoria, quantas vezes a oferecer numa semana (segunda–domingo). Deixe vazio o que não precisar. Contam as refeições em que o alimento aparece e não foi recusado.',
   'plan.min': 'mín', 'plan.max': 'máx', 'plan.min_of': '{name}: mínimo semanal', 'plan.max_of': '{name}: máximo semanal',
   'plan.menu': 'Ementa', 'plan.menu_note': 'O que preparar em cada dia e refeição. Toque numa refeição para escolher alimentos ou escrever uma nota.',

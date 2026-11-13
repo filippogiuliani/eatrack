@@ -37,6 +37,15 @@
     } catch (e) { showError(e); } finally { sending = false; }
   }
 
+  // paTrack (weHub mode): the paediatrician's plans of this child archived there
+  let papers = $state(null); // { available, documents, error }
+  $effect(() => {
+    const child = app.childId;
+    papers = null;
+    if (child) get(`/plan/documents?child=${child}`).then((d) => { if (app.childId === child) papers = d; }).catch(() => {});
+  });
+  const shortDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
   const macros = $derived([...new Set(app.categories.map((c) => c.macro))]);
   const siblings = $derived(activeChildren().filter((c) => c.id !== app.childId));
 
@@ -121,6 +130,22 @@
   <p class="empty">{t('children.none')} <a href="#/family">{t('children.add_link')}</a></p>
 {:else if loaded}
   <p class="muted small intro">{t('plan.intro')}</p>
+
+  {#if papers?.available}
+    <section class="card stack papers">
+      <h2>{t('plan.papers_title')}</h2>
+      {#if papers.error}<p class="muted small">{papers.error}</p>
+      {:else if !papers.documents.length}<p class="muted small">{t('plan.papers_none')}</p>
+      {:else}
+        {#each papers.documents as d (d.id)}
+          <a class="paper" href={d.url} target="_blank" rel="noopener">
+            <span class="paper-title">{d.doc_type || d.title}{#if d.doc_date}<span class="muted"> · {shortDate(d.doc_date)}</span>{/if}</span>
+            {#if d.excerpt}<span class="muted small excerpt">{d.excerpt}</span>{/if}
+          </a>
+        {/each}
+      {/if}
+    </section>
+  {/if}
 
   <div class="layout">
     <section class="card stack">
@@ -277,4 +302,9 @@
   .what i { color: var(--muted); }
   .picker { max-height: 46vh; overflow-y: auto; }
   .shop { align-self: flex-start; }
+  .papers { margin-bottom: 16px; }
+  .paper { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--r-sm, 8px); text-decoration: none; color: var(--ink); }
+  .paper:hover { background: var(--surface-2); }
+  .paper-title { font-weight: 600; }
+  .excerpt { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
