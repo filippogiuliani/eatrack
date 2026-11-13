@@ -1,7 +1,6 @@
 // English (reference language and default: every key must exist here)
 export default {
   'nav.sections': 'Sections', 'nav.diary': 'Diary', 'nav.pantry': 'Pantry', 'nav.foods': 'Foods',
-  'nav.apps': 'Family apps', 'nav.home': 'Family home',
   'nav.stats': 'Stats', 'nav.family': 'Family',
 
   'common.wait': 'Please wait…', 'common.close': 'Close', 'common.delete': 'Delete', 'common.optional': 'optional',

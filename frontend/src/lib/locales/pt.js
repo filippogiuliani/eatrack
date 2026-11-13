@@ -1,7 +1,6 @@
 // Portuguese (Portugal)
 export default {
   'nav.sections': 'Secções', 'nav.diary': 'Diário', 'nav.pantry': 'Despensa', 'nav.foods': 'Alimentos',
-  'nav.apps': 'Apps da família', 'nav.home': 'Início da família',
   'nav.stats': 'Estatísticas', 'nav.family': 'Família',
 
   'common.wait': 'Aguarde…', 'common.close': 'Fechar', 'common.delete': 'Eliminar', 'common.optional': 'opcional',
