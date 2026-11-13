@@ -68,7 +68,7 @@ def test_connect_and_send(family, client, monkeypatch):
 def test_through_wehub_no_address_or_token(family, client, monkeypatch):
     """With weHub the family's doTrack is reached through weHub: the admin only picks the list."""
     import db
-    import hub
+    from famkit import hub
     monkeypatch.setattr(hub, 'URL', 'http://wehub.test')
     monkeypatch.setattr(hub, 'KEY', 'k' * 40)
     with db.transaction() as conn:
@@ -98,7 +98,7 @@ def test_through_wehub_no_address_or_token(family, client, monkeypatch):
     sent = ok(c.post('/api/integrations/dotrack/send', json={'items': ['Zucchine', 'Mela']}))
     assert sent == {'added': 1, 'skipped': 1, 'list_name': 'Mercato'}
     method, url, payload, params, headers = calls[-1]
-    assert (method, url, payload, params) == ('POST', 'http://wehub.test/api/service/dotrack/families/7/lists/5/items',
+    assert (method, url, payload, params) == ('POST', 'http://wehub.test/api/service/apps/dotrack/families/7/lists/5/items',
                                               {'items': ['Zucchine', 'Mela']}, {'user': 10})
     assert headers['Authorization'] == 'Bearer ' + 'k' * 40
     # doTrack has never seen the family: a readable reason

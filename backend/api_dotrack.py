@@ -1,6 +1,7 @@
 """Link with doTrack (the family organizer): the foods of the weekly menu go to a doTrack shopping list.
 
-With weHub (EATRACK_HUB_URL/KEY set and the family coming from weHub) there is nothing to set up: eaTrack asks weHub,
+With weHub (EATRACK_HUB_URL/KEY set and the family coming from weHub) there is nothing to set up: eaTrack asks weHub
+(famkit.hub.ask),
 which passes the request on to doTrack with the key it already has; the admin only picks the list. Entries are added
 in doTrack as the person who sent them.
 
@@ -12,7 +13,7 @@ import requests
 from flask import Blueprint, abort, g, jsonify
 
 import db
-import hub
+from famkit import hub
 from auth import require_admin
 from common import body, text
 
@@ -39,25 +40,17 @@ def _user_hub_id():
 
 
 def _via_hub(hub_family, method, path, payload=None):
-    """doTrack through weHub (/api/service/dotrack/families/<id>…)."""
+    """doTrack through weHub (famkit.hub.ask)."""
     try:
-        r = requests.request(method, f"{hub.URL}/api/service/dotrack/families/{hub_family}{path}", json=payload,
-                             params={'user': _user_hub_id()}, timeout=TIMEOUT + 2, allow_redirects=False,
-                             headers={'Authorization': f'Bearer {hub.KEY}', 'User-Agent': 'eaTrack'})
-    except requests.RequestException:
-        abort(502, 'weHub is not reachable')
-    try:
-        data = r.json()
-    except ValueError:
-        abort(502, 'doTrack answered with an error')
-    if r.status_code == 404:
-        msg = str(data.get('error', '')) if isinstance(data, dict) else ''
-        abort(502, 'doTrack is not connected to weHub' if 'not connected' in msg
-              else 'doTrack does not know this family yet: sign in to doTrack once' if 'sign in' in msg
+        return hub.ask('dotrack', method, path, hub_family, _user_hub_id(), payload, timeout=TIMEOUT + 2)
+    except hub.AskError as e:
+        abort(502, 'doTrack is not connected to weHub' if 'not connected' in e.message
+              else 'doTrack does not know this family yet: sign in to doTrack once' if 'sign in' in e.message
               else 'doTrack answered with an error')
-    if r.status_code >= 400:
-        abort(502, 'doTrack is not reachable' if r.status_code == 502 else 'doTrack answered with an error')
-    return data
+    except hub.HubDown:
+        abort(502, 'weHub is not reachable')
+    except hub.Unavailable as e:
+        abort(502, 'doTrack is not reachable' if 'not reachable' in str(e) else 'doTrack answered with an error')
 
 
 def _call(url, token, method, path, payload=None):

@@ -46,7 +46,7 @@ def _fresh_app_on(tmp_path, monkeypatch, setup_sql):
     conn.close()
     monkeypatch.setattr(db, 'DATA_DIR', str(path.parent))
     monkeypatch.setattr(db, 'DB_PATH', str(path))
-    import backup
+    from famkit import backup
     monkeypatch.setattr(backup, 'BACKUP_DIR', str(path.parent / 'backups'))
     return create_app(), path
 

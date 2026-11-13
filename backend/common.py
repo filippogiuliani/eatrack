@@ -1,25 +1,8 @@
 """Helpers shared by the API modules."""
-import datetime
 
 from flask import abort, g, request
 
-
-def body():
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        abort(400, 'Invalid request (JSON expected)')
-    return data
-
-
-def valid_date(value, field='date'):
-    try:
-        return datetime.date.fromisoformat(str(value)).isoformat()
-    except ValueError:
-        abort(400, f'{field}: invalid date')
-
-
-def text(value, max_len=2000):
-    return str(value or '').strip()[:max_len]
+from famkit.web import body, placeholders, rows, text, valid_date  # noqa: F401  (the base helpers)
 
 
 def id_list(values, field):
@@ -31,14 +14,6 @@ def id_list(values, field):
         return list(dict.fromkeys(int(v) for v in values))  # no duplicates, order preserved
     except (TypeError, ValueError):
         abort(400, f'{field}: invalid ids')
-
-
-def rows(cursor):
-    return [dict(r) for r in cursor.fetchall()]
-
-
-def placeholders(values):
-    return ','.join('?' * len(values))
 
 
 # ---------- Ownership checks against the current family (g.family_id) ----------

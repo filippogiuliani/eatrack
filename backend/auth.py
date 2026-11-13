@@ -12,9 +12,9 @@ from flask import Blueprint, abort, g, jsonify, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import db
-import hub
+from famkit import hub
 import i18n
-import mail
+from famkit import mail
 from common import body, text, valid_date
 
 bp = Blueprint('auth', __name__)
@@ -23,7 +23,7 @@ bp = Blueprint('auth', __name__)
 # (EATRACK_REGISTRAZIONE=chiusa is the name used before v5 and still works.)
 SIGNUP_OPEN = (os.environ.get('EATRACK_SIGNUP', 'open') != 'closed'
                and os.environ.get('EATRACK_REGISTRAZIONE', '') != 'chiusa')
-# EATRACK_PASSWORD_LOGIN=0: only the OIDC providers. With weHub (hub.py) always only the provider.
+# EATRACK_PASSWORD_LOGIN=0: only the OIDC providers. With weHub (famkit/hub.py) always only the provider.
 PASSWORD_LOGIN = os.environ.get('EATRACK_PASSWORD_LOGIN', '1') not in ('0', 'off', 'false', 'no') and not hub.enabled()
 BASE_URL = os.environ.get('EATRACK_URL', '').rstrip('/')
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
@@ -171,7 +171,7 @@ def _send_verification(conn, user_id, email):
 # ---------- Endpoints ----------
 @bp.get('/me')
 def me():
-    import oidc
+    from famkit import oidc
     base = {'signup_open': SIGNUP_OPEN and not hub.enabled(), 'oidc': oidc.public_providers(), 'password_login': PASSWORD_LOGIN,
             'hub': hub.public_info()}
     if not getattr(g, 'user', None):
