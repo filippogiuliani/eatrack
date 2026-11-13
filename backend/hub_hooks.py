@@ -1,5 +1,7 @@
 """eaTrack's part of the weHub link (the rest is famkit.hub): who this app's people are, what happens when a
 member leaves, how two families made separately are merged. Registered in app.py with hub.use(hub_hooks)."""
+from flask import g, jsonify
+
 from famkit import hub
 
 # ======================================================================
@@ -83,3 +85,31 @@ def merge_data(conn, src, dst, report):
         conn.execute('DELETE FROM dotrack_links WHERE family_id = ?', (src,))
     else:
         conn.execute('UPDATE dotrack_links SET family_id = ? WHERE family_id = ?', (dst, src))
+
+
+# ---------- weHub's home: today's meals and the jars to use soon ----------
+
+JAR_WARN_DAYS = {'fridge': 2, 'freezer': 30, 'pantry': 60}   # as in the interface (frontend/src/lib/constants.js)
+
+
+@hub.service('/summary')
+def summary():
+    """{children: [{name, meals_today: [meal types]}], jars_soon, url}"""
+    import datetime
+
+    import db
+    from auth import BASE_URL
+    today = datetime.date.today()
+    with db.transaction() as conn:
+        children = conn.execute('SELECT id, name FROM children WHERE family_id = ? AND archived = 0 ORDER BY birth_date DESC, name',
+                                (g.family_id,)).fetchall()
+        meals = {}
+        for r in conn.execute('''SELECT m.child_id, m.meal_type FROM meals m JOIN children c ON c.id = m.child_id
+                                 WHERE c.family_id = ? AND m.date = ? ORDER BY m.created_at''', (g.family_id, today.isoformat())):
+            meals.setdefault(r['child_id'], []).append(r['meal_type'])
+        soon = 0
+        for j in conn.execute('SELECT location, made_on FROM jars WHERE family_id = ? AND used_on IS NULL', (g.family_id,)):
+            age = (today - datetime.date.fromisoformat(j['made_on'])).days
+            soon += age >= JAR_WARN_DAYS.get(j['location'], 2)
+    return jsonify(children=[{'name': c['name'], 'meals_today': meals.get(c['id'], [])} for c in children],
+                   jars_soon=soon, url=BASE_URL or None)

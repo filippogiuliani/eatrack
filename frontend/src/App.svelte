@@ -184,7 +184,7 @@
     .nav a:not(.logo) { flex: none; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 9px 12px; font-size: 0.92rem; }
     .nav a:not(.logo) .ico { width: 18px; height: 18px; }
     .nav a.on { background: var(--primary-soft); }
-    .main { padding: 32px 32px 48px; width: 100%; }
+    .main { padding: 32px 32px 48px; width: 100%; max-width: 1680px; }
     .logout {
       margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 0; border-radius: var(--r-sm);
       background: transparent; color: var(--muted); font: inherit; font-weight: 500; font-size: 0.92rem; cursor: pointer; text-align: left;

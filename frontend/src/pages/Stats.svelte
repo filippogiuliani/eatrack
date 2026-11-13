@@ -110,7 +110,11 @@
   .tile .k { font-weight: 500; color: var(--muted); font-size: 0.85rem; }
   .tile.alert .v { color: var(--danger); }
   .layout { display: grid; gap: 14px; grid-template-columns: 1fr; }
-  @media (min-width: 1000px) { .layout { grid-template-columns: 1fr 1fr; align-items: start; } }
+  /* Desktop: the cards flow into up to three columns, each as tall as it needs (no holes under the shorter ones) */
+  @media (min-width: 1000px) {
+    .layout { display: block; columns: 3 360px; column-gap: 14px; }
+    .layout > :global(*) { break-inside: avoid; margin: 0 0 14px; }
+  }
   h2 { margin-bottom: 4px; }
   .sub { margin-bottom: 14px; }
   .bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }

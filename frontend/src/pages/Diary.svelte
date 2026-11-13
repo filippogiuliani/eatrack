@@ -139,6 +139,7 @@
   .switch { margin-bottom: 14px; }
   .days { display: flex; flex-direction: column; gap: 14px; transition: opacity 0.2s; }
   .days.loading { opacity: 0.55; }
+  @media (min-width: 1400px) { .days { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
   .heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; font-size: 1.05rem; }
   .rel { color: var(--primary); }
   .date { text-transform: capitalize; }
