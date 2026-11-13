@@ -176,6 +176,7 @@ def me():
             'hub': hub.public_info()}
     if not getattr(g, 'user', None):
         return jsonify(authenticated=False, **base)
+    base['hub'] = hub.public_info(getattr(g, 'family_id', None), g.user['id'])  # with the app switcher
     with db.transaction() as conn:
         password_hash = conn.execute('SELECT password_hash FROM users WHERE id = ?', (g.user['id'],)).fetchone()[0]
         identities = [r[0] for r in conn.execute('SELECT provider FROM identities WHERE user_id = ?', (g.user['id'],))]

@@ -1,6 +1,7 @@
 // Italian
 export default {
   'nav.sections': 'Sezioni', 'nav.diary': 'Diario', 'nav.pantry': 'Dispensa', 'nav.foods': 'Alimenti',
+  'nav.apps': 'Le app di famiglia', 'nav.home': 'Home di famiglia',
   'nav.stats': 'Statistiche', 'nav.family': 'Famiglia',
 
   'common.wait': 'Attendi…', 'common.close': 'Chiudi', 'common.delete': 'Elimina', 'common.optional': 'facoltativo',

@@ -1,6 +1,7 @@
 // French
 export default {
   'nav.sections': 'Sections', 'nav.diary': 'Journal', 'nav.pantry': 'Réserve', 'nav.foods': 'Aliments',
+  'nav.apps': 'Apps de la famille', 'nav.home': 'Accueil de la famille',
   'nav.stats': 'Statistiques', 'nav.family': 'Famille',
 
   'common.wait': 'Patientez…', 'common.close': 'Fermer', 'common.delete': 'Supprimer', 'common.optional': 'facultatif',

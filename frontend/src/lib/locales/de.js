@@ -1,6 +1,7 @@
 // German
 export default {
   'nav.sections': 'Bereiche', 'nav.diary': 'Tagebuch', 'nav.pantry': 'Vorrat', 'nav.foods': 'Lebensmittel',
+  'nav.apps': 'Familien-Apps', 'nav.home': 'Familien-Startseite',
   'nav.stats': 'Statistik', 'nav.family': 'Familie',
 
   'common.wait': 'Bitte warten…', 'common.close': 'Schließen', 'common.delete': 'Löschen', 'common.optional': 'optional',
